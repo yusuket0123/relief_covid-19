@@ -34,6 +34,7 @@ test_b = function(data, devide_by, pattern1, pattern2, var_list){
     t <- t.test(dplyr::filter(data, eval(parse(text = devide_by)) == pattern1)[[i]], 
                 dplyr::filter(data, eval(parse(text = devide_by)) == pattern2)[[i]])
     list_t[[i]] = t
+    print(i)
   }
   name_estimate1 = paste(devide_by, "yes",sep = "_")
   name_estimate2 = paste(devide_by, "no",sep = "_")
@@ -49,13 +50,21 @@ test_b = function(data, devide_by, pattern1, pattern2, var_list){
 
 ### 年度毎のバランステスト
 var_list_201518 = list("urban", "hhhead_female", "hhhead_age","hh_head_literacy","hh_head_educ_pri","hh_head_educ_sec","hh_head_educ_high","hh_head_educ_vocation","hh_head_educ_col",
-                       "hhsize", "hh_work_employee", "hh_work_farm", "hh_work_business",
+                       "lhhsize", "hh_work_employee", "hh_work_farm", "hh_work_business",
                        "elite_public", "elite_lc_gov", "elite_gov", "elite_con", 
                        "lpercapcons", "nd_drought", "nd_flood", "nd_livestock","nd_epi")
+var_list_201820 = list("urban", "hhhead_female", "hhhead_age","hh_head_literacy","hh_head_educ_pri","hh_head_educ_sec","hh_head_educ_high","hh_head_educ_vocation","hh_head_educ_col",
+                       "lhhsize", "hh_work_employee", "hh_work_farm", "hh_work_business",
+                       "elite_public", "elite_lc_gov", "elite_gov", "elite_con", 
+                       "lpercapcons")
 
 
 tab = test_b(dataset_list_all_year, "year", "2015", "2018", var_list = var_list_201518)
-write.csv(tab, file.path("desc", "balance_test", "t.test_by_year.csv"))
+write.csv(tab, file.path("desc", "balance_test", "t.test_by_year_15vs18.csv"))
+tab = test_b(dataset_list_all_year, "year", "2018", "2020", var_list = var_list_201820)
+write.csv(tab, file.path("desc", "balance_test", "t.test_by_year_18vs20.csv"))
+
+
 
 ### error = 1,0のバランステスト
 list_i = list("dataset_2015_all", "dataset_2018_all")

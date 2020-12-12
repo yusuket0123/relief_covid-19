@@ -12,7 +12,6 @@ source(path_merge)
 
 dataset_list$dataset_2015_all %<>% dplyr::mutate(comid = stringr::str_sub(hhid, start = 1, end = -7))
 dataset_list$dataset_2018_all %<>% dplyr::mutate(comid = stringr::str_sub(hhid, start = 1, end = -7))
-View(psych::describe(dataset_list$dataset_2018_all))
 
 year = list("2018", "2020")
 
@@ -35,6 +34,11 @@ var_step_2_2020 = unlist(append(var_step_1,
                                   "hh_work_employee", "hh_work_farm", "hh_work_business", 
                                   "shock_sickness","shock_jobloss","shock_business","shock_theft","shock_agri","shock_input","shock_output","shock_inf")
                                 ))
+var_list_ipw = c(
+              "lpercapcons", "lhhsize","hhhead_female", "hhhead_age", "hh_head_literacy",
+              "hh_head_educ_pri", "hh_head_educ_sec", "hh_head_educ_sec", "hh_head_educ_high", "hh_head_educ_vocation", 
+              "hh_head_educ_col","hh_work_employee", "hh_work_farm", "hh_work_business"
+)
 
 
 var_list_2018 = list(var_step_1 = var_step_1, var_step_2 = var_step_2_2018)
@@ -61,14 +65,23 @@ for (y in year) {
     var_list = var_list_2020
     name_df_past = paste("dataset", "2018", "all", sep = "_")
   }
-  
   df_use = dataset_list[[name_df_current]] %>% 
     dplyr::left_join(., 
                      dataset_list[[name_df_past]] %>% 
                        dplyr::select(c("hhid", "trnsfr_any_dummy")) %>%
                        dplyr::rename(hist_aid = trnsfr_any_dummy),
                      by = "hhid"
-                     )
+    )
+  
+  if(y == "2018"){ # 2018のみhist_aidの欠損に対処
+    formula_weight = (paste("hist_aid", paste(var_list_ipw, collapse = "+"), sep = "~"))
+    res.weighting = glm(formula_weight, data = df_use, family = binomial("probit"))
+    df_use["ps_hist_aid"] = predict(res.weighting, type = "response", newdata = df_use)
+    df_use %<>% dplyr::mutate(
+      hist_aid_ipw = dplyr::case_when(hist_aid == 0 ~ 1/(1-ps_hist_aid), hist_aid == 1~1/ps_hist_aid, TRUE ~ NA_real_)
+    )  
+  }
+  res.weighting$fitted.values 
   for (i in outcome) {
     for (j in names(var_list)) {
       name = paste0(i, gsub("var_step_+", "s", j) ,"NoId", gsub("20+", "", y))
@@ -81,12 +94,20 @@ for (y in year) {
       list_est_error[[name]] = summary
       print(paste0("done:", name))
     }
+    if (year == "2018") {
+      name = paste0(i, gsub("var_step_+", "s", j), "NoId", "ipw")
+      summary = estimate_error(df_use, comid = "no", outcome = i, covariates = var_list_2018$var_step_2)
+      list_est_error[[name]] = summary
+      print(paste0("done:", name))
+      
+      name = paste0(i, gsub("var_step_+", "s", j), "Id","ipw")
+      summary = estimate_error(df_use, comid = "yes", outcome = i, covariates = var_list_2018$var_step_2)
+      list_est_error[[name]] = summary
+      print(paste0("done:", name))
+    }
   }
   
 }
-
-
-
 
 ## Create a blank workbook
 wb <- openxlsx::createWorkbook()

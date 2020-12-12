@@ -212,6 +212,13 @@ mutate_logvar = function(data, var_list){
   }
   return(data)
 }
+
+mutate_capital_dummy = function(data){
+  df = data %>%
+    dplyr::mutate(capital = dplyr::case_when(stringi::stri_detect_regex(hhid_use, ".37.*")~ 1, TRUE ~ 0))
+  return(df)
+}
+
 mutate_error = function(data, year){
   if(year == "2018"){
     cutoff = quantile(data[["lpercapcons_use"]], 0.092, na.rm = TRUE) 
@@ -256,22 +263,26 @@ dataset_2015_all %<>%
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_day_use"), name_to = "percapcons_imp_use") %>% 
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_imp_day_use"), name_to = "percapcons_use") %>% 
   mutate_logvar(., list_logs_2015) %>%
-  mutate_error(., year = "2015")
+  mutate_error(., year = "2015") %>%
+  mutate_capital_dummy(.)
 
 dataset_2018_all %<>% 
   mutate_mean(., list_means) %>% 
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_day_use"), name_to = "percapcons_imp_use") %>% 
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_imp_day_use"), name_to = "percapcons_use") %>% 
   mutate_logvar(., list_logs_2018) %>% 
-  mutate_error(., year = "2018")
+  mutate_error(., year = "2018") %>%
+  mutate_capital_dummy(.)
 
 list_logs_2020 = list("trnsfr_cash_use", "trnsfr_food_use", "trnsfr_inkind_use")
 
 dataset_2020_r1_all = dataset_list$dataset_2020_hhid_r1 %>% 
-  dplyr::left_join(., dataset_2018_all %>% dplyr::select(c("hhid_use", "percapcons_use", "lpercapcons_use","percapcons_imp_use", "lpercapcons_imp_use", "hhhead_female_use",  "hhhead_age_use",  "hh_head_literacy_use","hh_head_educ_pri_use","hh_head_educ_sec_use","hh_head_educ_high_use","hh_head_educ_vocation_use","hh_head_educ_col_use",
+  dplyr::left_join(., dataset_2018_all %>% dplyr::select(c("hhid_use", "percapcons_use", "lpercapcons_use","percapcons_imp_use", "lpercapcons_imp_use", "hhhead_female_use",  "hhhead_age_use",  "hh_head_literacy_use","hh_head_educ_pri_use",
+                                                           "hh_head_educ_sec_use","hh_head_educ_high_use","hh_head_educ_vocation_use","hh_head_educ_col_use",
                                                            "lhhsize_use", "hh_work_employee_use", "hh_work_farm_use", "hh_work_business_use", "elite_lc_gov_use", "elite_gov_use", "elite_con_use")), by = "hhid_use") %>% 
   mutate_logvar(., list_logs_2020) %>%
-  mutate_error(., year = "2020")
+  mutate_error(., year = "2020") %>%
+  mutate_capital_dummy(.)
 
 dataset_list = list(dataset_2015_all = dataset_2015_all,
                     dataset_2018_all = dataset_2018_all,

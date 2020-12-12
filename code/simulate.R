@@ -405,14 +405,3 @@ for (i in list_cons) {
   print(sum(df_use[[i]], na.rm = TRUE))
   print("")
 }
-
-
-
-
-
-
-
-
-
-
-
