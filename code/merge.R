@@ -297,6 +297,10 @@ for (i in names(dataset_list)) {
 dataset_list_all_year = purrr::map2(dataset_list, names(dataset_list), ~ dplyr::mutate(.x, year = gsub("(dataset_)|(_all)", "", .y))) %>% purrr::reduce(., dplyr::bind_rows)
 write.csv(dataset_list_all_year, file.path("datas", "processed", "dataset_list_all_year.csv"))
 
+### 異常値処理
+dataset_list$dataset_2018_all %<>% dplyr::mutate(hhhead_age = dplyr::na_if(hhhead_age, 130))
+
+
 print("done: merge.R")
 
 ### デバッグ
