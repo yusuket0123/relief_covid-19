@@ -14,7 +14,7 @@ outcome = c("trnsfr_any_dummy", "trnsfr_food_dummy", "trnsfr_cash_dummy",
                       "in_error_popbnfcry", "ex_error_popbnfcry","in_error_popbnfcry_imp", "ex_error_popbnfcry_imp",
                       "in_error_povline", "ex_error_povline"
                       )
-outcome = paste("com", outcome_com, sep = "_")
+outcome = paste("com", outcome, sep = "_")
 
 var_step_1 = paste("com", c( "elite_lc_gov", "elite_gov", "elite_con"), sep = "_")
 
@@ -34,10 +34,18 @@ var_step_3_2020 = unlist(append(var_step_2,var_step_3_only_2020))
 
 var_cap_inter = c("com_elite_lc_gov*com_capital", "com_elite_gov*com_capital", "com_elite_con*com_capital")
 
+var_list_ipw = c(
+  "lpercapcons", "lhhsize","hhhead_female", "hhhead_age", "hh_head_literacy",
+  "hh_head_educ_pri", "hh_head_educ_sec", "hh_head_educ_sec", "hh_head_educ_high", "hh_head_educ_vocation", 
+  "hh_head_educ_col","hh_work_employee", "hh_work_farm", "hh_work_business"
+)
+var_list_ipw = paste("com", var_list_ipw, sep = "_")
+
 
 var_list_2018 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_3 = var_step_3_2018)
 var_list_2020 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_3 = var_step_3_2020)
-  
+
+
 
 
 estimate_error = function(data, outcome, covariates){
@@ -63,10 +71,10 @@ for (y in year) {
   
   if(y == "2018"){
     var_list = var_list_2018
-    name_df_past = paste("dataset", "2015", "all", sep = "_")
+    name_df_past = paste("df_community_level", "2015", sep = "_")
   } else if (y == "2020") {
     var_list = var_list_2020
-    name_df_past = paste("dataset", "2018", "all", sep = "_")
+    name_df_past = paste("df_community_level", "2018", sep = "_")
   }
   
   var_list[["var_step_2C"]] = var_step_2C
@@ -76,9 +84,9 @@ for (y in year) {
   df_use = dataset_community_level[[name_df_current]] %>% 
     dplyr::left_join(., 
                      dataset_community_level[[name_df_past]] %>% 
-                       dplyr::select(c("hhid", "trnsfr_any_dummy")) %>%
-                       dplyr::rename(hist_aid = trnsfr_any_dummy),
-                     by = "hhid"
+                       dplyr::select(c("comid", "com_trnsfr_any_dummy")) %>%
+                       dplyr::rename(com_hist_aid = com_trnsfr_any_dummy),
+                     by = "comid"
     )
   
   if(y == "2018"){ # 2018のみhist_aidの欠損に対処
@@ -87,30 +95,20 @@ for (y in year) {
     df_use["com_ps_hist_aid"] = predict(res.weighting, type = "response", newdata = df_use)
     df_use_ipw = df_use %>%
       dplyr::mutate(
-        com_hist_aid_ipw = dplyr::case_when(hist_aid == 0 ~ 1/(1-ps_hist_aid), hist_aid == 1~1/ps_hist_aid, TRUE ~ NA_real_)
+        com_hist_aid_ipw = dplyr::case_when(com_hist_aid == 0 ~ 1/(1-com_ps_hist_aid), com_hist_aid == 1~1/com_ps_hist_aid, TRUE ~ NA_real_)
       )  
   }
   
   for (i in outcome) {
     for (j in names(var_list)) {
-      name = paste0(i, gsub("var_step_+", "s", j) ,"NId", gsub("20+", "", y))
-      summary = estimate_error(df_use, comid = "no", outcome = i, covariates = var_list[[j]])
-      list_est_community_level[[name]] = summary
-      print(paste0("done:", name))
-      
-      name = paste0(i, gsub("var_step_+", "s", j), "Id", gsub("20+", "", y))
-      summary = estimate_error(df_use, comid = "yes", outcome = i, covariates = var_list[[j]])
+      name = paste0(gsub("com_+", "", i), gsub("var_step_+", "s", j) ,"NId", gsub("20+", "", y))
+      summary = estimate_error(df_use, outcome = i, covariates = var_list[[j]])
       list_est_community_level[[name]] = summary
       print(paste0("done:", name))
     }
     if (year == "2018") {
-      name = paste0(i, "s2", "NId", "ipw")
-      summary = estimate_error(df_use_ipw, comid = "no", outcome = i, covariates = var_list_2018$var_step_2)
-      list_est_community_level[[name]] = summary
-      print(paste0("done:", name))
-      
-      name = paste0(i, "s2", "Id","ipw")
-      summary = estimate_error(df_use_ipw, comid = "yes", outcome = i, covariates = var_list_2018$var_step_2)
+      name = paste0(gsub("com_+", "", i), "s2", "NId", "ipw")
+      summary = estimate_error(df_use_ipw, outcome = i, covariates = var_list_2018$var_step_2)
       list_est_community_level[[name]] = summary
       print(paste0("done:", name))
     }
@@ -120,7 +118,7 @@ for (y in year) {
 ## Create a blank workbook
 wb <- openxlsx::createWorkbook()
 
-for (i in names(list_est_error)) {
+for (i in names(list_est_community_level)) {
   sheet = i
   openxlsx::addWorksheet(wb, paste0(sheet,"e"))
   openxlsx::addWorksheet(wb, paste0(sheet,"g"))
@@ -128,7 +126,7 @@ for (i in names(list_est_error)) {
   openxlsx::writeData(wb, sheet = paste0(sheet,"g"), x = list_est_community_level[[i]]$glance)
 }
 ## Save workbook to working directory
-openxlsx::saveWorkbook(wb, file = "est_eror.xlsx", overwrite = TRUE)
+openxlsx::saveWorkbook(wb, file = "est_eeror_community_level.xlsx", overwrite = TRUE)
 
 
 

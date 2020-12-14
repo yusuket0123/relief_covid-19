@@ -40,7 +40,7 @@ var_list_2018 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_
 var_list_2020 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_3 = var_step_3_2020)
 
 var_cap_inter = c("elite_lc_gov*capital", "elite_gov*capital", "elite_con*capital")
-var_elite_community = c("elite_lc_gov_community", "elite_gov_community", "elite_con_community")
+var_elite_community = c("com_elite_lc_gov", "com_elite_gov", "com_elite_con")
 
 
 var_list_ipw = c(
@@ -142,5 +142,5 @@ for (i in names(list_est_error)) {
   openxlsx::writeData(wb, sheet = paste0(sheet,"g"), x = list_est_error[[i]]$glance)
 }
 ## Save workbook to working directory
-openxlsx::saveWorkbook(wb, file = "est_eror.xlsx", overwrite = TRUE)
+openxlsx::saveWorkbook(wb, file = "est_eeror.xlsx", overwrite = TRUE)
 

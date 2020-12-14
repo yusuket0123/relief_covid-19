@@ -2,8 +2,8 @@
 #community levelのデータ
 #"""
 
-path_merge = file.path("code", "merge.R")
-source(path_merge)
+#path_merge = file.path("code", "merge.R")
+#source(path_merge)
 
 
 # var_list
@@ -79,9 +79,11 @@ for (y in year) {
   print(y)
   df_name = paste("dataset", y, "all", sep = "_")
   data = dataset_list[[df_name]]
-  df_community_level = make_df_community_level(data = data, year = y)
+  df_community_level = make_df_community_level(data = data, year = y) 
   dataset_community_level[[paste("df_community_level", y,sep = "_")]] = df_community_level
   print("")
 }
+
+
 
 print("done: merge_community.R")

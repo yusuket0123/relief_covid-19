@@ -215,20 +215,11 @@ mutate_logvar = function(data, var_list){
 
 mutate_capital_dummy = function(data){
   df = data %>%
-    dplyr::mutate(capital = dplyr::case_when(stringi::stri_detect_regex(hhid_use, ".37.*")~ 1, TRUE ~ 0))
+    dplyr::mutate(capital = dplyr::case_when(stringi::stri_detect_regex(hhid_use, "^.37.*")~ 1, TRUE ~ 0))
   return(df)
 }
 
-mutate_elite_com_level = function(data){
-  df = data %>%
-    dplyr::group_by(comid_use) %>%
-    dplyr::mutate(elite_lc_gov_community_use = mean(elite_lc_gov_use, na.rm = TRUE),
-                  elite_gov_community_use = mean(elite_gov_use, na.rm = TRUE),
-                  elite_con_community_use = mean(elite_con_use, na.rm = TRUE)
-                  ) %>%
-    dplyr::ungroup()
-  return(df)
-}
+
 
 mutate_error = function(data, year){
   if(year == "2018"){
@@ -301,11 +292,8 @@ dataset_list$dataset_2015_all %<>% dplyr::mutate(comid_use = stringr::str_sub(hh
 dataset_list$dataset_2018_all %<>% dplyr::mutate(comid_use = stringr::str_sub(hhid_use, start = 1, end = -7))
 
 for (i in names(dataset_list)) {
-  dataset_list[[i]] %<>% 
-    mutate_elite_com_level(.) %>%
-    mutate_capital_dummy(.)
+  dataset_list[[i]] %<>% mutate_capital_dummy(.)
 }
-
 # "_use"の文字消去
 for (i in names(dataset_list)) {
   colnames(dataset_list[[i]]) = gsub("+_use", "", colnames(dataset_list[[i]]))
@@ -318,12 +306,24 @@ write.csv(dataset_list_all_year, file.path("datas", "processed", "dataset_list_a
 ### 異常値処理
 dataset_list$dataset_2018_all %<>% dplyr::mutate(hhhead_age = dplyr::na_if(hhhead_age, 130))
 
-year = c("2015", "2018", "2020")
-for (y in year) {
-  dataset_list[[paste("dataset", y, "all", sep = "_")]] %<>% 
-    dplyr::left_join(.,  dataset_community_level[[paste("df_community_level", y, sep = "_")]], by = "comid")
-  print(paste0("merge_", y))
+Run.merge_community.R = function(run = "yes"){
+  if(run == "yes"){
+    path_merge_community = file.path("code", "merge_community.R")
+    source(path_merge_community)
+    year = c("2015", "2018", "2020")
+    
+    for (y in year) {
+      dataset_list[[paste("dataset", y, "all", sep = "_")]] %<>% 
+        dplyr::left_join(.,  dataset_community_level[[paste("df_community_level", y, sep = "_")]], by = "comid")
+      print(paste0("merge_", y))
+    }
+    return(dataset_list)
+  } else if (run == "no"){
+    print("skip merge_community.R")
+    return(dataset_list)
+    }
 }
+dataset_list = Run.merge_community.R(run = "yes")
 
 print("done: merge.R")
 
