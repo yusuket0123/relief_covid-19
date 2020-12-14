@@ -131,9 +131,42 @@ for (y in year) {
   }
 }
 
+### informal sharingの推計
+year = c("2015", "2020")
+for (y in year) {
+  
+  if (y == "2015") {
+    var_list = purrr::map(var_list_2018, ~ .x[!stringi::stri_detect_regex(.x, "hist_aid")])
+    df_use = dataset_list$dataset_2015_all 
+    }
+  else if (y == "2020") {
+    var_list = var_list_2020
+    df_use = dataset_list$dataset_2020_all %>% 
+      dplyr::left_join(., 
+                       dataset_list$dataset_2018_all %>% 
+                         dplyr::select(c("hhid", "trnsfr_any_dummy")) %>%
+                         dplyr::rename(hist_aid = trnsfr_any_dummy),
+                       by = "hhid"
+      )
+    }
+  
+  for (j in names(var_list)) {
+    name = paste0("share", gsub("var_step_+", "s", j) ,"NId", gsub("20+", "", y))
+    summary = estimate_error(df_use, comid = "no", outcome = "share", covariates = var_list[[j]])
+    list_est_error[[name]] = summary
+    print(paste0("done:", name))
+    
+    name = paste0("share", gsub("var_step_+", "s", j), "Id", gsub("20+", "", y))
+    summary = estimate_error(df_use, comid = "yes", outcome = "share", covariates = var_list[[j]])
+    list_est_error[[name]] = summary
+    print(paste0("done:", name))
+  }
+}
+
+
 ## Create a blank workbook
 wb <- openxlsx::createWorkbook()
-names(list_est_error)
+
 for (i in names(list_est_error)) {
   sheet = i
   openxlsx::addWorksheet(wb, paste0(sheet,"e"))

@@ -50,7 +50,7 @@ var_list_2020 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_
 
 estimate_error = function(data, outcome, covariates){
   formula = paste(outcome, paste(covariates, collapse = " + "), sep = " ~ ")
-  est = lfe::felm(as.formula(formula) , data = data)
+  est = estimatr::lm_robust(as.formula(formula), clusters = comid, se_type = "stata", data = data)
   summary = list(formula = formula, estimate = broom::tidy(est), glance = broom::glance(est), augment = broom::augment(est))
   return(summary)
 }
