@@ -23,7 +23,7 @@ outcome = list("trnsfr_any_dummy", "trnsfr_food_dummy", "trnsfr_cash_dummy",
 var_step_1 = c( "elite_lc_gov", "elite_gov", "elite_con")
 var_step_2_only = c("hist_aid", "lpercapcons", "lhhsize","hhhead_female", "hhhead_age", "hh_head_literacy",
                     "hh_head_educ_pri", "hh_head_educ_sec", "hh_head_educ_high", 
-                    "hh_head_educ_vocation", "hh_head_educ_col", "hh_work_employee", "hh_work_farm", "hh_work_business"
+                    "hh_head_educ_vocation", "hh_head_educ_col","hh_work_employee", "hh_work_farm", "hh_work_business", "capital"
 )
 var_step_2 = unlist(append(var_step_1,var_step_2_only))
 
@@ -39,11 +39,9 @@ var_step_3_2020 = unlist(append(var_step_2,var_step_3_only_2020))
 var_list_2018 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_3 = var_step_3_2018)
 var_list_2020 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_3 = var_step_3_2020)
 
-var_cap_inter = c("elite_lc_gov*capital", "elite_gov*capital", "elite_con*capital", "capital")
+var_cap_inter = c("elite_lc_gov*capital", "elite_gov*capital", "elite_con*capital")
 var_elite_community = c("elite_lc_gov_community", "elite_gov_community", "elite_con_community")
-# Elite_community levelを入れるモデル
-var_step_2E = var_step_2C = unlist(append(var_elite_community, var_step_2_only))
-var_step_3E = unlist(list(var_elite_community, var_step_2_only, eval(parse(text = var_step_3_name))))
+
 
 var_list_ipw = c(
   "lpercapcons", "lhhsize","hhhead_female", "hhhead_age", "hh_head_literacy",
@@ -66,12 +64,14 @@ estimate_error = function(data, comid = "yes", outcome, covariates){
 list_est_error = list()
 for (y in year) {
   name_df_current = paste("dataset", y, "all", sep = "_")
-  var_step_3_name = paste("var_step_3_only", y, sep = "_")
+  var_list = eval(parse(text = paste("var_list", y, sep = "_")))
   
-  # capital dummyを入れるモデル
-  var_step_2C = unlist(append(var_cap_inter, var_step_2_only))
-  var_step_3C = unlist(list(var_cap_inter, var_step_2_only, eval(parse(text = var_step_3_name))))
-
+  # capital dummyこうさこうを入れるモデル
+  var_step_2C = unlist(append(var_cap_inter, var_list$var_step_2))
+  var_step_3C = unlist(append(var_cap_inter,var_list$var_step_3))
+  # Elite_community levelを入れるモデル
+  var_step_2E = unlist(append(var_elite_community, var_list$var_step_2))
+  var_step_3E = unlist(append(var_elite_community, var_list$var_step_3))
   
   if(y == "2018"){
     var_list = var_list_2018

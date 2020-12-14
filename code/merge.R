@@ -318,6 +318,12 @@ write.csv(dataset_list_all_year, file.path("datas", "processed", "dataset_list_a
 ### 異常値処理
 dataset_list$dataset_2018_all %<>% dplyr::mutate(hhhead_age = dplyr::na_if(hhhead_age, 130))
 
+year = c("2015", "2018", "2020")
+for (y in year) {
+  dataset_list[[paste("dataset", y, "all", sep = "_")]] %<>% 
+    dplyr::left_join(.,  dataset_community_level[[paste("df_community_level", y, sep = "_")]], by = "comid")
+  print(paste0("merge_", y))
+}
 
 print("done: merge.R")
 
