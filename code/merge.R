@@ -110,7 +110,7 @@ dataset_2018_pid %<>%
   dplyr::mutate(hhhead_female_use = dplyr::case_when(sum(hhhead_female_use == 1, na.rm = TRUE) > 0 ~ 1, TRUE ~ 0),
                 hhhead_muslim_use = dplyr::case_when(sum(hhhead_muslim_use == 1, na.rm = TRUE) > 0 ~ 1, TRUE ~ 0)
                 )
-  
+
 write.csv(dataset_2018_pid, "datas/processed/dataset_2018_pid.csv")
 
 ## hhidごと
@@ -219,6 +219,17 @@ mutate_capital_dummy = function(data){
   return(df)
 }
 
+mutate_elite_com_level = function(data){
+  df = data %>%
+    dplyr::group_by(comid_use) %>%
+    dplyr::mutate(elite_lc_gov_community_use = mean(elite_lc_gov_use, na.rm = TRUE),
+                  elite_gov_community_use = mean(elite_gov_use, na.rm = TRUE),
+                  elite_con_community_use = mean(elite_con_use, na.rm = TRUE)
+                  ) %>%
+    dplyr::ungroup()
+  return(df)
+}
+
 mutate_error = function(data, year){
   if(year == "2018"){
     cutoff = quantile(data[["lpercapcons_use"]], 0.092, na.rm = TRUE) 
@@ -263,16 +274,14 @@ dataset_2015_all %<>%
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_day_use"), name_to = "percapcons_imp_use") %>% 
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_imp_day_use"), name_to = "percapcons_use") %>% 
   mutate_logvar(., list_logs_2015) %>%
-  mutate_error(., year = "2015") %>%
-  mutate_capital_dummy(.)
+  mutate_error(., year = "2015") 
 
 dataset_2018_all %<>% 
   mutate_mean(., list_means) %>% 
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_day_use"), name_to = "percapcons_imp_use") %>% 
   mutate_percapcons(., setdiff(colnames(.)[stringi::stri_detect_regex(colnames(.), "^cons_.*day_use$")], "cons_food_imp_day_use"), name_to = "percapcons_use") %>% 
   mutate_logvar(., list_logs_2018) %>% 
-  mutate_error(., year = "2018") %>%
-  mutate_capital_dummy(.)
+  mutate_error(., year = "2018") 
 
 list_logs_2020 = list("trnsfr_cash_use", "trnsfr_food_use", "trnsfr_inkind_use")
 
@@ -281,18 +290,27 @@ dataset_2020_r1_all = dataset_list$dataset_2020_hhid_r1 %>%
                                                            "hh_head_educ_sec_use","hh_head_educ_high_use","hh_head_educ_vocation_use","hh_head_educ_col_use",
                                                            "lhhsize_use", "hh_work_employee_use", "hh_work_farm_use", "hh_work_business_use", "elite_lc_gov_use", "elite_gov_use", "elite_con_use")), by = "hhid_use") %>% 
   mutate_logvar(., list_logs_2020) %>%
-  mutate_error(., year = "2020") %>%
-  mutate_capital_dummy(.)
+  mutate_error(., year = "2020") 
 
 dataset_list = list(dataset_2015_all = dataset_2015_all,
                     dataset_2018_all = dataset_2018_all,
                     dataset_2020_all = dataset_2020_r1_all
                     )
 
+dataset_list$dataset_2015_all %<>% dplyr::mutate(comid_use = stringr::str_sub(hhid_use, start = 1, end = -7))
+dataset_list$dataset_2018_all %<>% dplyr::mutate(comid_use = stringr::str_sub(hhid_use, start = 1, end = -7))
+
+for (i in names(dataset_list)) {
+  dataset_list[[i]] %<>% 
+    mutate_elite_com_level(.) %>%
+    mutate_capital_dummy(.)
+}
+
 # "_use"の文字消去
 for (i in names(dataset_list)) {
   colnames(dataset_list[[i]]) = gsub("+_use", "", colnames(dataset_list[[i]]))
 }
+
 
 dataset_list_all_year = purrr::map2(dataset_list, names(dataset_list), ~ dplyr::mutate(.x, year = gsub("(dataset_)|(_all)", "", .y))) %>% purrr::reduce(., dplyr::bind_rows)
 write.csv(dataset_list_all_year, file.path("datas", "processed", "dataset_list_all_year.csv"))

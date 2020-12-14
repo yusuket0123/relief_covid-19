@@ -16,6 +16,7 @@ get_hhid = function(data){
     dplyr::select("hhid_use")
   return(df)
 }
+
 get_df_use = function(data){
   df = data %>%
     dplyr::filter(s7bq1 == 1|s10bq1 == 1) %>%
@@ -23,6 +24,7 @@ get_df_use = function(data){
    
   return(df)
 }
+
 make_df_imp = function(df_use){
   V <- ncol(df_use)
   # create initial predictor matrix and imputation methods
@@ -75,7 +77,7 @@ make_cons_food = function(data){
 a = dataset_2015$sect7b_plantingw3 %>% dplyr::left_join(., dataset_2015$sect1_harvestw3 %>% 
                                                           dplyr::select(c("hhid_use", "hhhead_female_use","hhhead_age_use","hhsize_use",
                                                                           "hh_head_literacy_use","hh_head_educ_pri_use","hh_head_educ_sec_use",
-                                                                          "hh_head_educ_high_use","hh_head_educ_vocation_use","hh_head_educ_col_use"))) %>%
+                                                                          "hh_head_educ_high_use","hh_head_educ_vocation_use","hh_head_educ_col_use")), by = "hhid_use") %>%
   dplyr::mutate(p1_attr = ifelse(is.na(p1), 1, 0),
                 p0_attr = ifelse(is.na(p0), 1, 0),
                 q1_attr = ifelse(is.na(q1), 1, 0),
@@ -112,7 +114,7 @@ dataset_2015$sect7b_plantingw3 %<>% make_cons_food(.) %>% dplyr::distinct(hhid_u
 a = dataset_2018$sect7b_plantingw4 %>% dplyr::left_join(., dataset_2018$sect1_harvestw4 %>% 
                                                           dplyr::select(c("hhid_use", "hhhead_female_use","hhhead_age_use","hhsize_use",
                                                                           "hh_head_literacy_use","hh_head_educ_pri_use","hh_head_educ_sec_use",
-                                                                          "hh_head_educ_high_use","hh_head_educ_vocation_use","hh_head_educ_col_use"))) %>%
+                                                                          "hh_head_educ_high_use","hh_head_educ_vocation_use","hh_head_educ_col_use")), by = "hhid_use") %>%
   dplyr::mutate(p1_attr = ifelse(is.na(p1), 1, 0),
                 p0_attr = ifelse(is.na(p0), 1, 0),
                 q1_attr = ifelse(is.na(q1), 1, 0),

@@ -122,7 +122,7 @@ sum(df_elitecap$utility_ganma2_food_without_elitecap,na.rm = TRUE)
 sum(df_elitecap$utility_ganma3_food_without_elitecap,na.rm = TRUE)
 sum(df_elitecap$utility_ganma5_food_without_elitecap,na.rm = TRUE)
 
-df_elitecap$elite_lc_gov
+
 
 #PMT基準の受益者選定
 mutate_pmt = function(){

@@ -10,8 +10,7 @@ library(magrittr)
 path_merge = file.path("code", "merge.R")
 source(path_merge)
 
-dataset_list$dataset_2015_all %<>% dplyr::mutate(comid = stringr::str_sub(hhid, start = 1, end = -7))
-dataset_list$dataset_2018_all %<>% dplyr::mutate(comid = stringr::str_sub(hhid, start = 1, end = -7))
+
 
 year = list("2018", "2020")
 
@@ -24,7 +23,7 @@ outcome = list("trnsfr_any_dummy", "trnsfr_food_dummy", "trnsfr_cash_dummy",
 var_step_1 = c( "elite_lc_gov", "elite_gov", "elite_con")
 var_step_2_only = c("hist_aid", "lpercapcons", "lhhsize","hhhead_female", "hhhead_age", "hh_head_literacy",
                     "hh_head_educ_pri", "hh_head_educ_sec", "hh_head_educ_high", 
-                    "hh_head_educ_vocation", "hh_head_educ_col","hh_work_employee", "hh_work_farm", "hh_work_business"
+                    "hh_head_educ_vocation", "hh_head_educ_col", "hh_work_employee", "hh_work_farm", "hh_work_business"
 )
 var_step_2 = unlist(append(var_step_1,var_step_2_only))
 
@@ -41,12 +40,17 @@ var_list_2018 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_
 var_list_2020 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_3 = var_step_3_2020)
 
 var_cap_inter = c("elite_lc_gov*capital", "elite_gov*capital", "elite_con*capital", "capital")
+var_elite_community = c("elite_lc_gov_community", "elite_gov_community", "elite_con_community")
+# Elite_community levelを入れるモデル
+var_step_2E = var_step_2C = unlist(append(var_elite_community, var_step_2_only))
+var_step_3E = unlist(list(var_elite_community, var_step_2_only, eval(parse(text = var_step_3_name))))
 
 var_list_ipw = c(
   "lpercapcons", "lhhsize","hhhead_female", "hhhead_age", "hh_head_literacy",
   "hh_head_educ_pri", "hh_head_educ_sec", "hh_head_educ_sec", "hh_head_educ_high", "hh_head_educ_vocation", 
   "hh_head_educ_col","hh_work_employee", "hh_work_farm", "hh_work_business"
 )
+
 
 estimate_error = function(data, comid = "yes", outcome, covariates){
   if(comid == "yes"){
@@ -62,10 +66,12 @@ estimate_error = function(data, comid = "yes", outcome, covariates){
 list_est_error = list()
 for (y in year) {
   name_df_current = paste("dataset", y, "all", sep = "_")
-  var_step_2c = unlist(append(var_cap_inter, var_step_2_only))
-  var_step_3_name = paste("var_step_3_only", year, sep = "_")
-  var_step_3c = unlist(append(var_cap_inter, eval(parse(text = var_step_3_name))))
+  var_step_3_name = paste("var_step_3_only", y, sep = "_")
   
+  # capital dummyを入れるモデル
+  var_step_2C = unlist(append(var_cap_inter, var_step_2_only))
+  var_step_3C = unlist(list(var_cap_inter, var_step_2_only, eval(parse(text = var_step_3_name))))
+
   
   if(y == "2018"){
     var_list = var_list_2018
@@ -75,8 +81,11 @@ for (y in year) {
     name_df_past = paste("dataset", "2018", "all", sep = "_")
   }
   
-  var_list[["var_step_2c"]] = var_step_2c
-  var_list[["var_step_3c"]] = var_step_3c
+  var_list[["var_step_2C"]] = var_step_2C
+  var_list[["var_step_3C"]] = var_step_3C
+  var_list[["var_step_2E"]] = var_step_2E
+  var_list[["var_step_3E"]] = var_step_3E
+  
   
   df_use = dataset_list[[name_df_current]] %>% 
     dplyr::left_join(., 
@@ -87,19 +96,18 @@ for (y in year) {
     )
   
   if(y == "2018"){ # 2018のみhist_aidの欠損に対処
-    df_use_ipw = df_use %>%
-    formula_weight = (paste("hist_aid", paste(var_list_ipw, collapse = "+"), sep = "~"))
+    formula_weight = paste("hist_aid", paste(var_list_ipw, collapse = "+"), sep = "~")
     res.weighting = glm(formula_weight, data = df_use, family = binomial("probit"))
     df_use["ps_hist_aid"] = predict(res.weighting, type = "response", newdata = df_use)
-    df_use_ipw %<>%
+    df_use_ipw = df_use %>%
       dplyr::mutate(
         hist_aid_ipw = dplyr::case_when(hist_aid == 0 ~ 1/(1-ps_hist_aid), hist_aid == 1~1/ps_hist_aid, TRUE ~ NA_real_)
         )  
   }
-  res.weighting$fitted.values 
+
   for (i in outcome) {
     for (j in names(var_list)) {
-      name = paste0(i, gsub("var_step_+", "s", j) ,"NoId", gsub("20+", "", y))
+      name = paste0(i, gsub("var_step_+", "s", j) ,"NId", gsub("20+", "", y))
       summary = estimate_error(df_use, comid = "no", outcome = i, covariates = var_list[[j]])
       list_est_error[[name]] = summary
       print(paste0("done:", name))
@@ -110,7 +118,7 @@ for (y in year) {
       print(paste0("done:", name))
     }
     if (year == "2018") {
-      name = paste0(i, "s2", "NoId", "ipw")
+      name = paste0(i, "s2", "NId", "ipw")
       summary = estimate_error(df_use_ipw, comid = "no", outcome = i, covariates = var_list_2018$var_step_2)
       list_est_error[[name]] = summary
       print(paste0("done:", name))
