@@ -15,7 +15,7 @@ source(path_merge)
 
 
 ### pmtの推計
-outcome = list("lpercapcons_imp", "lpercapcons")
+outcome = c("lpercapcons_imp", "lpercapcons")
 
 var_step_1 = c( "wall", "roof","floor","electricity","lrooms","pipewater")
 var_step_2 = unlist(append(list(var_step_1, "lhhsize"), setdiff(colnames(dataset_list$dataset_2015_all %>% dplyr::select(., starts_with("hh"))), c("hhid", "hhhead", "hhhead_muslim", "hhsize"))))
@@ -24,30 +24,43 @@ var_step_4 = unlist(append(var_step_3, setdiff(colnames(dataset_list$dataset_201
 
 var_list = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_3 = var_step_3, var_step_4 = var_step_4)
 
-estimate_pmt = function(data, comid = "yes", outcome, covariates){
+estimate_pmt = function(data, comid = "yes", outcome, covariates, method = "lm"){
   if(comid == "yes"){
-    formula = paste(outcome, paste(paste(covariates, collapse = " + "), "comid.x", sep = " + "), sep = " ~ ")
-  } else {
+    formula = paste(outcome, paste(paste(covariates, collapse = " + "), "comid", sep = " + "), sep = " ~ ")
+  } else if(comid == "no"){
     formula = paste(outcome, paste(covariates, collapse = " + "), sep = " ~ ")
+  } else {
+    print("specify yes or no as augment of comid")
   }
-  est = lfe::felm(as.formula(formula) , data = data)
-  summary = list(formula = formula, estimate = broom::tidy(est), glance = broom::glance(est), augment = broom::augment(est))
+  
+  if(method == "lm"){
+    est = lfe::felm(as.formula(formula) , data = data)
+    summary = list(formula = formula, estimate = broom::tidy(est), glance = broom::glance(est), augment = broom::augment(est))
+  } else if (method == "qr") {
+    est = quantreg::rq(as.formula(formula), data = data, tau = 0.5)
+    summary = list(formula = formula, estimate = broom::tidy(est, se.type = "iid"), glance = broom::glance(est, se.type = "iid"), augment = broom::augment(est, se.type = "iid"))
+  } else {
+    print("specify qr (quantile regression) or lm (linear regression) as augment of method")
+  }
+  return(summary)
 }
 
 list_est_pmt = list()
 for (i in outcome) {
   for (j in names(var_list)) {
-    name = paste(i, gsub("var_step_+", "s", j) ,"NoId", sep = "_")
-    summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "no", outcome = i, covariates = var_list[[j]])
+    name = paste(k, i, gsub("var_step_+", "s", j), "Id", sep = "_")
+    summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "yes", outcome = i, covariates = var_list[[j]], method = "lm")
     list_est_pmt[[name]] = summary
-    print(paste0("done:", name))
-    
-    name = paste(i, gsub("var_step_+", "s", j), "Id", sep = "_")
-    summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "yes", outcome = i, covariates = var_list[[j]])
+    print(paste0("done:", name)) 
+    name = paste(k, i, gsub("var_step_+", "s", j) ,"NoId", sep = "_")
+    summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "no", outcome = i, covariates = var_list[[j]], method = "lm")
     list_est_pmt[[name]] = summary
     print(paste0("done:", name))
   }
 }
+## 分位点回帰（試行錯誤）
+summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "no", outcome = "lpercapcons", covariates = var_list$var_step_3, method = "qr")
+summary$estimate
 
 
 
@@ -62,8 +75,3 @@ for (i in names(list_est_pmt)) {
 }
 ## Save workbook to working directory
 openxlsx::saveWorkbook(wb, file = "est_pmt.xlsx", overwrite = TRUE)
-
-
-
-
-
