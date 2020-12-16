@@ -48,16 +48,18 @@ estimate_pmt = function(data, comid = "yes", outcome, covariates, method = "lm")
 list_est_pmt = list()
 for (i in outcome) {
   for (j in names(var_list)) {
-    name = paste(k, i, gsub("var_step_+", "s", j), "Id", sep = "_")
+    name = paste("lm",i, gsub("var_step_+", "s", j), "Id", sep = "_")
     summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "yes", outcome = i, covariates = var_list[[j]], method = "lm")
     list_est_pmt[[name]] = summary
-    print(paste0("done:", name)) 
-    name = paste(k, i, gsub("var_step_+", "s", j) ,"NoId", sep = "_")
+    print(paste0("done:", name))
+    
+    name = paste("lm", i, gsub("var_step_+", "s", j) ,"NoId", sep = "_")
     summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "no", outcome = i, covariates = var_list[[j]], method = "lm")
     list_est_pmt[[name]] = summary
     print(paste0("done:", name))
   }
 }
+
 ## 分位点回帰（試行錯誤）
 summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "no", outcome = "lpercapcons", covariates = var_list$var_step_3, method = "qr")
 summary$estimate

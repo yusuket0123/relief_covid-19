@@ -77,7 +77,7 @@ for (i in plt_list) {
 #  g = plot(g)
 #  ggsave(filename = filename, g)
 #}
-View(dataset_2018_all)
+
 quantile(dataset_2018_all$percapcons_imp_use, c(0.1174), na.rm = TRUE)#137430
 quantile(dataset_2018_all$percapcons_imp_use, c(0.12), na.rm = TRUE)
 
@@ -111,6 +111,7 @@ p<- ggplot(df, aes(x=year, y=prob_beneficiary, group = type,color=type)) +
   geom_text(aes(label=round(prob_beneficiary, 3)),hjust=0.2, vjust=-0.7, size = 7)
 plot(p)
 make_hist(data = "dataset_2015_all", "percapcons")
+
 
 
 ### 可視化・相関

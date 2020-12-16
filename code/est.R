@@ -43,7 +43,7 @@ var_cap_inter = c("elite_lc_gov*capital", "elite_gov*capital", "elite_con*capita
 var_lpcons_inter = c("elite_lc_gov*lpercapcons", "elite_gov*lpercapcons", "elite_con*lpercapcons")
 var_com_lpcons_inter = c("elite_lc_gov*com_lpercapcons", "elite_gov*com_lpercapcons", "elite_con*com_lpercapcons")
 var_elite_community = c("com_elite_lc_gov", "com_elite_gov", "com_elite_con")
-
+var_hist_aid = c("elite_lc_gov*hist_aid", "elite_gov*hist_aid", "elite_con*hist_aid")
 
 var_list_ipw = c(
   "lpercapcons", "lhhsize","hhhead_female", "hhhead_age", "hh_head_literacy",
@@ -87,6 +87,12 @@ for (y in year) {
   var_step_1Q = unlist(append(var_com_lpcons_inter, var_list$var_step_1))
   var_step_2Q = unlist(append(var_com_lpcons_inter, var_list$var_step_2))
   var_step_3Q = unlist(append(var_com_lpcons_inter, var_list$var_step_3))
+  # hist_aidの異質性
+  var_step_1H = unlist(append(var_hist_aid, var_list$var_step_1))
+  var_step_2H = unlist(append(var_hist_aid, var_list$var_step_2))
+  var_step_3H = unlist(append(var_hist_aid, var_list$var_step_3))
+  
+  
   
   if(y == "2018"){
     var_list = var_list_2018
@@ -105,7 +111,7 @@ for (y in year) {
     )
   
   # var_listに追加的分析の共変量リストを格納
-  for(i in c("C", "E", "P", "Q")){
+  for(i in c("C", "E", "P", "Q", "H")){
     for (j in c(1,2,3)) {
       var_list[paste0("var_step_", j, i)] = eval(parse(text = paste0("var_step_", j, i)))
     }

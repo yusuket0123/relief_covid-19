@@ -130,11 +130,9 @@ mutate_pmt = function(){
   df_use = dataset_list$dataset_2018_all[[var[[!stringi::stri_detect_regex(var, ".*comid.*")]]]]
   
 }
-rownames(list_est_pmt$lpercapcons_s4_Id$estimate$term[["plot"]])
-list_est_pmt$lpercapcons_s4_Id$estimate$estimate[1] + list_est_pmt$lpercapcons_s4_Id$estimate$term["plot"]
 
-lfe::predict(est, newdata = dataset_list$dataset_2018_all)
-formula = list_est_pmt$lpercapcons_s4_Id$formula
+# lfe::predict(est, newdata = dataset_list$dataset_2018_all)
+formula = list_est_pmt$lm_lpercapcons_s4_Id$formula
 est = lm(as.formula(formula), data = dataset_list$dataset_2015_all )
 
 pmt = predict(est, newdata = levels(droplevels(dataset_list$dataset_2018_all)))
@@ -181,7 +179,11 @@ sum(df_pmt$utility_ganma3_pmt_popbnfcry_food,na.rm = TRUE)
 sum(df_pmt$utility_ganma5_pmt_popbnfcry_food,na.rm = TRUE)
 
 
-
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y)) +
+  geom_point() + 
+  geom_vline(xintercept = log10(137430/365)) +
+  geom_hline(yintercept = log10(137430/365))
+plot(g)
   
   
 #実際のper capita consの受益者選定
@@ -312,7 +314,7 @@ list_est_pmt$lpercapcons_s4_Id$estimate$estimate[1] + list_est_pmt$lpercapcons_s
 
 lfe::predict(est, newdata = dataset_list$dataset_2018_all)
 formula = list_est_pmt$lpercapcons_s4_Id$formula
-est = lm(as.formula(formula), data = dataset_list$dataset_2015_all )
+est = lm(as.formula(formula), data = dataset_list$dataset_2015_all)
 
 pmt = predict(est, newdata = levels(droplevels(dataset_list$dataset_2018_all)))
 
@@ -359,10 +361,30 @@ sum(df_pmt$utility_ganma5_pmt_popbnfcry_food,na.rm = TRUE)
 
 
 
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y, color = as.factor(ex_error_povline))) +
+  geom_point(alpha = 0.8) + 
+  geom_vline(xintercept = log10(137430/365)) +
+  geom_hline(yintercept = log10(137430/365))
+plot(g)
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y, color = as.factor(in_error_povline))) +
+  geom_point(alpha = 0.8) + 
+  geom_vline(xintercept = log10(137430/365)) +
+  geom_hline(yintercept = log10(137430/365))
+plot(g)
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y,  color = as.factor(ex_error_popbnfcry))) +
+  geom_point(alpha = 0.8) + 
+  geom_vline(xintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE)) +
+  geom_hline(yintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE))
+plot(g)
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y,  color = as.factor(in_error_popbnfcry))) +
+  geom_point(alpha = 0.8) + 
+  geom_vline(xintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE)) +
+  geom_hline(yintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE))
+plot(g)
 
 
 #実際のper capita consの受益者選定
-
+df_pmt$in_error_povline
 
 #ガンマの値帰る
 df_use = dataset_list$dataset_2018_all %>%
