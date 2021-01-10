@@ -11,7 +11,7 @@ source(path_merge)
   
 # var_list
 outcome = c("trnsfr_any_dummy", "trnsfr_food_dummy", "trnsfr_cash_dummy",
-                      "in_error_popbnfcry", "ex_error_popbnfcry","in_error_popbnfcry_imp", "ex_error_popbnfcry_imp",
+                      "in_error_popbnfcry", "ex_error_popbnfcry","in_error_popbnfcry", "ex_error_popbnfcry",
                       "in_error_povline", "ex_error_povline"
                       )
 outcome = paste("com", outcome, sep = "_")
@@ -50,11 +50,11 @@ var_list_2020 = list(var_step_1 = var_step_1, var_step_2 = var_step_2, var_step_
 
 estimate_error = function(data, outcome, covariates){
   formula = paste(outcome, paste(covariates, collapse = " + "), sep = " ~ ")
-  est = estimatr::lm_robust(as.formula(formula), clusters = comid, se_type = "stata", data = data)
+  est = lfe::felm(as.formula(formula), data = data)
   summary = list(formula = formula, estimate = broom::tidy(est), glance = broom::glance(est), augment = broom::augment(est))
   return(summary)
 }
-
+dataset_community_level$df_community_level_2018$com_hist_aid
 
 ### community levelの推計
 
@@ -81,13 +81,7 @@ for (y in year) {
   var_list[["var_step_3C"]] = var_step_3C
   
   
-  df_use = dataset_community_level[[name_df_current]] %>% 
-    dplyr::left_join(., 
-                     dataset_community_level[[name_df_past]] %>% 
-                       dplyr::select(c("comid", "com_trnsfr_any_dummy")) %>%
-                       dplyr::rename(com_hist_aid = com_trnsfr_any_dummy),
-                     by = "comid"
-    )
+  df_use = dataset_community_level[[name_df_current]] 
   
   if(y == "2018"){ # 2018のみhist_aidの欠損に対処
     formula_weight = paste("com_hist_aid", paste(var_list_ipw, collapse = "+"), sep = "~")
@@ -127,6 +121,3 @@ for (i in names(list_est_community_level)) {
 }
 ## Save workbook to working directory
 openxlsx::saveWorkbook(wb, file = "est_eeror_community_level.xlsx", overwrite = TRUE)
-
-
-

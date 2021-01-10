@@ -15,7 +15,7 @@ source(path_merge)
 
 
 ### pmtの推計
-outcome = c("lpercapcons_imp", "lpercapcons")
+outcome = c("lpercapcons")
 
 var_step_1 = c( "wall", "roof","floor","electricity","lrooms","pipewater")
 var_step_2 = unlist(append(list(var_step_1, "lhhsize"), setdiff(colnames(dataset_list$dataset_2015_all %>% dplyr::select(., starts_with("hh"))), c("hhid", "hhhead", "hhhead_muslim", "hhsize"))))
@@ -62,9 +62,18 @@ for (i in outcome) {
 
 ## 分位点回帰（試行錯誤）
 summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "no", outcome = "lpercapcons", covariates = var_list$var_step_3, method = "qr")
-summary$estimate
-
-
+#summary$glance
+var = unlist(stringi::stri_split_regex(summary$formula, pattern = "(.\\+.|.\\~.)"))
+var[1] = "1"
+pred = 0
+for (num in 1:length(var)) {
+  if(num == 1){
+    elem = summary$estimate$estimate[num] * 1
+  } else {
+    elem = summary$estimate$estimate[num] * dataset_list$dataset_2015_all[var[num]]
+  }
+  pred = pred + elem
+}
 
 ## Create a blank workbook
 wb <- openxlsx::createWorkbook()

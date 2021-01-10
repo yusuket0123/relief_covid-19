@@ -99,20 +99,21 @@ df = dataset_list_all_year %>% dplyr::group_by(year) %>%
   dplyr::summarise(prob_benefit_all = mean(trnsfr_any_dummy, na.rm = TRUE),
                    prob_benefit_cash = mean(trnsfr_cash_dummy, na.rm = TRUE),
                    prob_benefit_food = mean(trnsfr_food_dummy, na.rm = TRUE),
-                   prob_benefit_inkind = mean(trnsfr_inkind_dummy, na.rm = TRUE)
+                   prob_benefit_inkind = mean(trnsfr_inkind_dummy, na.rm = TRUE),
+                   prob_povline = mean(povline, na.rm = TRUE)
                    ) %>%
-  tidyr::pivot_longer(., cols = c("prob_benefit_all", "prob_benefit_cash", "prob_benefit_food", "prob_benefit_inkind"), names_to = "type", values_to = "prob_beneficiary")
+  tidyr::pivot_longer(., cols = c("prob_benefit_all", "prob_benefit_cash", "prob_benefit_food", "prob_benefit_inkind", "prob_povline"), names_to = "type", values_to = "prob_beneficiary")
   
 p<- ggplot(df, aes(x=year, y=prob_beneficiary, group = type,color=type)) + 
   geom_line() +
   geom_point() + 
   labs(y = "prop. of beneficiaries") +
-  scale_color_hue(name = "aid", labels = c("prob_benefit_all" = "any", "prob_benefit_cash" = "cash", "prob_benefit_food" = "food", "prob_benefit_inkind" = "inkind")) +
+  scale_color_hue(name = "aid", labels = c("prob_benefit_all" = "any", "prob_benefit_cash" = "cash", "prob_benefit_food" = "food", "prob_benefit_inkind" = "inkind", "prob_povline" = "poverty_line")) +
   geom_text(aes(label=round(prob_beneficiary, 3)),hjust=0.2, vjust=-0.7, size = 7)
 plot(p)
 make_hist(data = "dataset_2015_all", "percapcons")
 
-
+quantile(dataset_list$dataset_2018_all$percapcons_imp, c(0.1),na.rm = TRUE)
 
 ### 可視化・相関
 cor_list <-c("in_error", "elite_gov_use", "elite_con_use", "elite_lc_gov_use","elite_public_use", "lpercapcons", "hhhead_female_use", "nd_drought_use","nd_flood_use",               

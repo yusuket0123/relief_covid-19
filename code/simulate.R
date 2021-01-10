@@ -47,8 +47,8 @@ mean(dataset_2018_all$cons_food_day_use, na.rm = TRUE)
 
 
 #crra 応用関数
-crra_func = function(percapcons, ganma = 3){
-  crra = (percapcons^(1-ganma)) / (1-ganma)
+crra_func = function(percapcons_imp, ganma = 3){
+  crra = (percapcons_imp^(1-ganma)) / (1-ganma)
   return(crra)
 }
 
@@ -58,18 +58,18 @@ crra_func = function(percapcons, ganma = 3){
 #推計モデルのエリートキャプチャーあり
 df_elitecap = merge(dataset_list$dataset_2020_all, list_est_error$trnsfr_any_dummys2Id$augment$.fitted, by ="row.names")
 df_elitecap %<>% 
-  dplyr::mutate(utility_ganma2_cash = crra_func((percapcons + y * 20000), ganma = 2),
-                utility_ganma3_cash = crra_func((percapcons + y * 20000), ganma = 3),
-                utility_ganma5_cash = crra_func((percapcons + y * 20000), ganma = 5) 
+  dplyr::mutate(utility_ganma2_cash = crra_func((percapcons_imp + y * 20000), ganma = 2),
+                utility_ganma3_cash = crra_func((percapcons_imp + y * 20000), ganma = 3),
+                utility_ganma5_cash = crra_func((percapcons_imp + y * 20000), ganma = 5) 
                 )%>%
                   dplyr::mutate(y_food = ifelse(stringi::stri_detect_regex(df_elitecap$hhid, "(.37.*)|(.27.*)|(.24.*)"), y, 0)
                 )%>% 
   dplyr::mutate(
-    utility_ganma2_food = crra_func((percapcons + y_food * 43092), ganma = 2),
-    utility_ganma3_food = crra_func((percapcons + y_food * 43092), ganma = 3),
-    utility_ganma5_food = crra_func((percapcons + y_food * 43092), ganma = 5)
+    utility_ganma2_food = crra_func((percapcons_imp + y_food * 43092), ganma = 2),
+    utility_ganma3_food = crra_func((percapcons_imp + y_food * 43092), ganma = 3),
+    utility_ganma5_food = crra_func((percapcons_imp + y_food * 43092), ganma = 5)
   )
- 
+ View(dataset_list$dataset_2020_all %>% dplyr::group_by(elite_gov, capital, trnsfr_any_dummy) %>% dplyr::summarise(dplyr::n()))
 
 sum(df_elitecap$utility_ganma2_cash,na.rm = TRUE)
 sum(df_elitecap$utility_ganma3_cash,na.rm = TRUE)
@@ -80,19 +80,19 @@ sum(df_elitecap$utility_ganma3_food,na.rm = TRUE)
 sum(df_elitecap$utility_ganma5_food,na.rm = TRUE)
 
 
-g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons, y = utility_ganma2_cash)) +
+g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons_imp, y = utility_ganma2_cash)) +
   geom_point()+
   ylim(-0.05, 0.01) +
   geom_path(data=data.frame(X=x<-seq(1,5,len=100), Y=x^(1-2) / (1-2))+0.2, aes(x=X,y=Y))
 plot(g)
 
-g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons, y = utility_ganma3_cash)) +
+g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons_imp, y = utility_ganma3_cash)) +
   geom_point()+
   ylim(-0.005, 0.01) +
   geom_path(data=data.frame(X=x<-seq(1,5,len=100), Y=x^(1-3) / (1-3))+0.2, aes(x=X,y=Y))
 plot(g)
 
-g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons, y = utility_ganma5_cash)) +
+g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons_imp, y = utility_ganma5_cash)) +
   geom_point()+
   ylim(-1, 1) 
   #geom_path(data=data.frame(X=x<-seq(1,5,len=1000), Y=x^(1-7)/(1-7)), aes(x=X,y=Y))
@@ -102,16 +102,16 @@ p <- ggplot(data=data.frame(X=c(-4,4)), aes(x=X))
 p <- p +stat_function(fun=function(x) x^(1-0.5)/(1-0.5))
 #推計モデルのエリートキャプチャーなし
 df_elitecap %<>% dplyr::mutate(y_without_elitecap = y - elite_lc_gov * (-0.112833071))
-df_elitecap %<>% dplyr::mutate(utility_ganma3_cash_without_elitecap = crra_func((percapcons + y_without_elitecap * 20000), ganma = 3),
-                              utility_ganma5_cash_without_elitecap = crra_func((percapcons + y_without_elitecap * 20000), ganma = 5),
-                              utility_ganma2_cash_without_elitecap = crra_func((percapcons + y_without_elitecap * 20000), ganma = 2)
+df_elitecap %<>% dplyr::mutate(utility_ganma3_cash_without_elitecap = crra_func((percapcons_imp + y_without_elitecap * 20000), ganma = 3),
+                              utility_ganma5_cash_without_elitecap = crra_func((percapcons_imp + y_without_elitecap * 20000), ganma = 5),
+                              utility_ganma2_cash_without_elitecap = crra_func((percapcons_imp + y_without_elitecap * 20000), ganma = 2)
 ) %>%
   dplyr::mutate(y_food = ifelse(stringi::stri_detect_regex(df_elitecap$hhid, "(.37.*)|(.27.*)|(.24.*)"), y_without_elitecap, 0)
   )%>% 
   dplyr::mutate(
-  utility_ganma2_food_without_elitecap = crra_func((percapcons + y_food * 43092), ganma = 2),
-  utility_ganma3_food_without_elitecap = crra_func((percapcons + y_food * 43092), ganma = 3),
-  utility_ganma5_food_without_elitecap = crra_func((percapcons + y_food * 43092), ganma = 5)
+  utility_ganma2_food_without_elitecap = crra_func((percapcons_imp + y_food * 43092), ganma = 2),
+  utility_ganma3_food_without_elitecap = crra_func((percapcons_imp + y_food * 43092), ganma = 3),
+  utility_ganma5_food_without_elitecap = crra_func((percapcons_imp + y_food * 43092), ganma = 5)
 )
 
 sum(df_elitecap$utility_ganma2_cash_without_elitecap,na.rm = TRUE)
@@ -142,24 +142,24 @@ a = df_pmt %>% dplyr::filter(stringi::stri_detect_regex(.$hhid, "(.37.*)|(.27.*)
 df_pmt %<>% dplyr::mutate(povline_pmt = ifelse(y <= log10(137430/365), 1, 0),
                           popbnfcry_pmt = ifelse(y <= quantile(y, c(0.092)), 1, 0)
                    ) %>%
-  dplyr::mutate(utility_ganma3_pmt_povline = crra_func((percapcons + povline_pmt * 20000), ganma = 2),
-               utility_ganma5_pmt_povline = crra_func((percapcons + povline_pmt * 20000), ganma = 5),
-               utility_ganma2_pmt_povline = crra_func((percapcons + povline_pmt * 20000), ganma = 3),
+  dplyr::mutate(utility_ganma3_pmt_povline = crra_func((percapcons_imp + povline_pmt * 20000), ganma = 2),
+               utility_ganma5_pmt_povline = crra_func((percapcons_imp + povline_pmt * 20000), ganma = 5),
+               utility_ganma2_pmt_povline = crra_func((percapcons_imp + povline_pmt * 20000), ganma = 3),
                povline_pmt_food = ifelse(percapcons <= (137430/365) & stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 
                                          1, 0),
-               utility_ganma3_pmt_popbnfcry = crra_func((percapcons + popbnfcry_pmt * 20000), ganma = 3),
-               utility_ganma5_pmt_popbnfcry = crra_func((percapcons + popbnfcry_pmt * 20000), ganma = 5),
-               utility_ganma2_pmt_popbnfcry = crra_func((percapcons + popbnfcry_pmt * 20000), ganma = 2),
+               utility_ganma3_pmt_popbnfcry = crra_func((percapcons_imp + popbnfcry_pmt * 20000), ganma = 3),
+               utility_ganma5_pmt_popbnfcry = crra_func((percapcons_imp + popbnfcry_pmt * 20000), ganma = 5),
+               utility_ganma2_pmt_popbnfcry = crra_func((percapcons_imp + popbnfcry_pmt * 20000), ganma = 2),
   ) %>%
-  dplyr::mutate(popbnfcry_pmt_food = ifelse(percapcons <= quantile(a$percapcons, c(0.092), na.rm =TRUE)& stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 
+  dplyr::mutate(popbnfcry_pmt_food = ifelse(percapcons_imp <= quantile(a$percapcons, c(0.092), na.rm =TRUE)& stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 
                                           1, 0)) %>%
   dplyr::mutate(
-    utility_ganma3_pmt_povline_food = crra_func((percapcons + povline_pmt_food * 43092), ganma = 3),
-    utility_ganma5_pmt_povline_food = crra_func((percapcons + povline_pmt_food * 43092), ganma = 5),
-    utility_ganma2_pmt_povline_food = crra_func((percapcons + povline_pmt_food * 43092), ganma = 2),
-    utility_ganma3_pmt_popbnfcry_food = crra_func((percapcons + popbnfcry_pmt_food * 43092), ganma = 3),
-    utility_ganma5_pmt_popbnfcry_food = crra_func((percapcons + popbnfcry_pmt_food * 43092), ganma = 5),
-    utility_ganma2_pmt_popbnfcry_food = crra_func((percapcons + popbnfcry_pmt_food * 43092), ganma = 2)
+    utility_ganma3_pmt_povline_food = crra_func((percapcons_imp + povline_pmt_food * 43092), ganma = 3),
+    utility_ganma5_pmt_povline_food = crra_func((percapcons_imp + povline_pmt_food * 43092), ganma = 5),
+    utility_ganma2_pmt_povline_food = crra_func((percapcons_imp + povline_pmt_food * 43092), ganma = 2),
+    utility_ganma3_pmt_popbnfcry_food = crra_func((percapcons_imp + popbnfcry_pmt_food * 43092), ganma = 3),
+    utility_ganma5_pmt_popbnfcry_food = crra_func((percapcons_imp + popbnfcry_pmt_food * 43092), ganma = 5),
+    utility_ganma2_pmt_popbnfcry_food = crra_func((percapcons_imp + popbnfcry_pmt_food * 43092), ganma = 2)
   )
 
 #cash  
@@ -179,14 +179,14 @@ sum(df_pmt$utility_ganma3_pmt_popbnfcry_food,na.rm = TRUE)
 sum(df_pmt$utility_ganma5_pmt_popbnfcry_food,na.rm = TRUE)
 
 
-g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y)) +
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons_imp, y)) +
   geom_point() + 
   geom_vline(xintercept = log10(137430/365)) +
   geom_hline(yintercept = log10(137430/365))
 plot(g)
+cor.test(df_pmt$lpercapcons_imp, df_pmt$y)
   
-  
-#実際のper capita consの受益者選定
+ #実際のper capita consの受益者選定
 
 
 #ガンマの値帰る
@@ -201,23 +201,23 @@ ganma = c("3","5","7")
 a = df_use %>% dplyr::filter(., stringi::stri_detect_regex(.$hhid, "(.37.*)|(.27.*)|(.24.*)"))
 
 df_use %<>% 
-       dplyr::mutate(beneficiary_food_popbnfcry_cons = ifelse(percapcons <= quantile(a$percapcons, c(0.092), na.rm = TRUE) & stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 1, 0)) %>%
+       dplyr::mutate(beneficiary_food_popbnfcry_cons = ifelse(percapcons_imp <= quantile(a$percapcons_imp, c(0.092), na.rm = TRUE) & stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 1, 0)) %>%
   dplyr::mutate(beneficiary_food_povline_cons = ifelse(stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE & povline_cons == 1, 1, 0)) %>%
-  dplyr::mutate(percapcons_food_povline_cons = percapcons + beneficiary_food_povline_cons * 43092,
+  dplyr::mutate(percapcons_food_povline_cons = percapcons_imp + beneficiary_food_povline_cons * 43092,
                 crra_food_povline_cons_ganma3 = crra_func(percapcons_food_povline_cons, ganma = 3),
                 crra_food_povline_cons_ganma5 = crra_func(percapcons_food_povline_cons, ganma = 5),
                 crra_food_povline_cons_ganma2 = crra_func(percapcons_food_povline_cons, ganma = 2),
-                percapcons_food_popbnfcry_cons = percapcons + beneficiary_food_popbnfcry_cons * 43092,
+                percapcons_food_popbnfcry_cons = percapcons_imp + beneficiary_food_popbnfcry_cons * 43092,
                 crra_food_popbnfcry_cons_ganma3 = crra_func(percapcons_food_popbnfcry_cons, ganma = 3),
                 crra_food_popbnfcry_cons_ganma5 = crra_func(percapcons_food_popbnfcry_cons, ganma = 5),
                 crra_food_popbnfcry_cons_ganma2 = crra_func(percapcons_food_popbnfcry_cons, ganma = 2)
                 ) %>%
-  dplyr::mutate(crra_cash_povlinec_ons_ganma2 = crra_func(percapcons + povline_cons * 20000, ganma = 2),
-                crra_cash_povline_cons_ganma3 = crra_func(percapcons + povline_cons * 20000, ganma = 3),
-                crra_cash_povline_cons_ganma5 = crra_func(percapcons + povline_cons * 20000, ganma = 5),
-                crra_cash_popbnfcry_cons_ganma2 = crra_func(percapcons + popbnfcry_cons * 20000, ganma = 2),
-                crra_cash_popbnfcry_cons_ganma3 = crra_func(percapcons + popbnfcry_cons * 20000, ganma = 3),
-                crra_cash_popbnfcry_cons_ganma5 = crra_func(percapcons + popbnfcry_cons * 20000, ganma = 5)
+  dplyr::mutate(crra_cash_povlinec_ons_ganma2 = crra_func(percapcons_imp + povline_cons * 20000, ganma = 2),
+                crra_cash_povline_cons_ganma3 = crra_func(percapcons_imp + povline_cons * 20000, ganma = 3),
+                crra_cash_povline_cons_ganma5 = crra_func(percapcons_imp + povline_cons * 20000, ganma = 5),
+                crra_cash_popbnfcry_cons_ganma2 = crra_func(percapcons_imp + popbnfcry_cons * 20000, ganma = 2),
+                crra_cash_popbnfcry_cons_ganma3 = crra_func(percapcons_imp + popbnfcry_cons * 20000, ganma = 3),
+                crra_cash_popbnfcry_cons_ganma5 = crra_func(percapcons_imp + popbnfcry_cons * 20000, ganma = 5)
   ) 
 
 list_cons = list("crra_food_povline_cons_ganma3", "crra_food_povline_cons_ganma5", "crra_food_povline_cons_ganma2", 
@@ -233,20 +233,28 @@ for (i in list_cons) {
 
 
 ############################################################
+############################################################
+############################################################
+############################################################
+############################################################
+############################################################
+############################################################
+############################################################
+
 
 #推計モデルのエリートキャプチャーあり
 df_elitecap = merge(dataset_list$dataset_2018_all, list_est_error$trnsfr_any_dummys2Id18$augment$.fitted, by ="row.names")
 df_elitecap %<>% 
-  dplyr::mutate(utility_ganma2_cash = crra_func((percapcons + y * 20000), ganma = 2),
-                utility_ganma3_cash = crra_func((percapcons + y * 20000), ganma = 3),
-                utility_ganma5_cash = crra_func((percapcons + y * 20000), ganma = 5) 
+  dplyr::mutate(utility_ganma2_cash = crra_func((percapcons_imp + y * 22634), ganma = 2),
+                utility_ganma3_cash = crra_func((percapcons_imp + y * 22634), ganma = 3),
+                utility_ganma5_cash = crra_func((percapcons_imp + y * 22634), ganma = 5) 
   )%>%
   dplyr::mutate(y_food = ifelse(stringi::stri_detect_regex(df_elitecap$hhid, "(.37.*)|(.27.*)|(.24.*)"), y, 0)
   )%>% 
   dplyr::mutate(
-    utility_ganma2_food = crra_func((percapcons + y_food * 43092), ganma = 2),
-    utility_ganma3_food = crra_func((percapcons + y_food * 43092), ganma = 3),
-    utility_ganma5_food = crra_func((percapcons + y_food * 43092), ganma = 5)
+    utility_ganma2_food = crra_func((percapcons_imp + y_food * 22634), ganma = 2),
+    utility_ganma3_food = crra_func((percapcons_imp + y_food * 22634), ganma = 3),
+    utility_ganma5_food = crra_func((percapcons_imp + y_food * 22634), ganma = 5)
   )
 
 
@@ -259,19 +267,19 @@ sum(df_elitecap$utility_ganma3_food,na.rm = TRUE)
 sum(df_elitecap$utility_ganma5_food,na.rm = TRUE)
 
 
-g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons, y = utility_ganma2_cash)) +
+g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons_imp, y = utility_ganma2_cash)) +
   geom_point()+
   ylim(-0.05, 0.01) +
   geom_path(data=data.frame(X=x<-seq(1,5,len=100), Y=x^(1-2) / (1-2))+0.2, aes(x=X,y=Y))
 plot(g)
 
-g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons, y = utility_ganma3_cash)) +
+g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons_imp, y = utility_ganma3_cash)) +
   geom_point()+
-  ylim(-0.005, 0.01) +
+  ylim(-0.005, 0.001) +
   geom_path(data=data.frame(X=x<-seq(1,5,len=100), Y=x^(1-3) / (1-3))+0.2, aes(x=X,y=Y))
 plot(g)
 
-g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons, y = utility_ganma5_cash)) +
+g = ggplot2::ggplot(df_elitecap, aes(x = lpercapcons_imp, y = utility_ganma5_cash)) +
   geom_point()+
   ylim(-1, 1) 
 #geom_path(data=data.frame(X=x<-seq(1,5,len=1000), Y=x^(1-7)/(1-7)), aes(x=X,y=Y))
@@ -281,16 +289,16 @@ p <- ggplot(data=data.frame(X=c(-4,4)), aes(x=X))
 p <- p +stat_function(fun=function(x) x^(1-0.5)/(1-0.5))
 #推計モデルのエリートキャプチャーなし
 df_elitecap %<>% dplyr::mutate(y_without_elitecap = y - elite_lc_gov * (-0.112833071))
-df_elitecap %<>% dplyr::mutate(utility_ganma3_cash_without_elitecap = crra_func((percapcons + y_without_elitecap * 20000), ganma = 3),
-                               utility_ganma5_cash_without_elitecap = crra_func((percapcons + y_without_elitecap * 20000), ganma = 5),
-                               utility_ganma2_cash_without_elitecap = crra_func((percapcons + y_without_elitecap * 20000), ganma = 2)
+df_elitecap %<>% dplyr::mutate(utility_ganma3_cash_without_elitecap = crra_func((percapcons_imp + y_without_elitecap * 22634), ganma = 3),
+                               utility_ganma5_cash_without_elitecap = crra_func((percapcons_imp + y_without_elitecap * 22634), ganma = 5),
+                               utility_ganma2_cash_without_elitecap = crra_func((percapcons_imp + y_without_elitecap * 22634), ganma = 2)
 ) %>%
   dplyr::mutate(y_food = ifelse(stringi::stri_detect_regex(df_elitecap$hhid, "(.37.*)|(.27.*)|(.24.*)"), y_without_elitecap, 0)
   )%>% 
   dplyr::mutate(
-    utility_ganma2_food_without_elitecap = crra_func((percapcons + y_food * 43092), ganma = 2),
-    utility_ganma3_food_without_elitecap = crra_func((percapcons + y_food * 43092), ganma = 3),
-    utility_ganma5_food_without_elitecap = crra_func((percapcons + y_food * 43092), ganma = 5)
+    utility_ganma2_food_without_elitecap = crra_func((percapcons_imp + y_food * 22634), ganma = 2),
+    utility_ganma3_food_without_elitecap = crra_func((percapcons_imp + y_food * 22634), ganma = 3),
+    utility_ganma5_food_without_elitecap = crra_func((percapcons_imp + y_food * 22634), ganma = 5)
   )
 
 sum(df_elitecap$utility_ganma2_cash_without_elitecap,na.rm = TRUE)
@@ -301,7 +309,7 @@ sum(df_elitecap$utility_ganma2_food_without_elitecap,na.rm = TRUE)
 sum(df_elitecap$utility_ganma3_food_without_elitecap,na.rm = TRUE)
 sum(df_elitecap$utility_ganma5_food_without_elitecap,na.rm = TRUE)
 
-df_elitecap$elite_lc_gov
+
 
 #PMT基準の受益者選定
 mutate_pmt = function(){
@@ -313,7 +321,7 @@ rownames(list_est_pmt$lpercapcons_s4_Id$estimate$term[["plot"]])
 list_est_pmt$lpercapcons_s4_Id$estimate$estimate[1] + list_est_pmt$lpercapcons_s4_Id$estimate$term["plot"]
 
 lfe::predict(est, newdata = dataset_list$dataset_2018_all)
-formula = list_est_pmt$lpercapcons_s4_Id$formula
+formula = list_est_pmt$lm_lpercapcons_imp_s4_Id$formula
 est = lm(as.formula(formula), data = dataset_list$dataset_2015_all)
 
 pmt = predict(est, newdata = levels(droplevels(dataset_list$dataset_2018_all)))
@@ -323,24 +331,24 @@ a = df_pmt %>% dplyr::filter(stringi::stri_detect_regex(.$hhid, "(.37.*)|(.27.*)
 df_pmt %<>% dplyr::mutate(povline_pmt = ifelse(y <= log10(137430/365), 1, 0),
                           popbnfcry_pmt = ifelse(y <= quantile(y, c(0.092)), 1, 0)
 ) %>%
-  dplyr::mutate(utility_ganma3_pmt_povline = crra_func((percapcons + povline_pmt * 20000), ganma = 2),
-                utility_ganma5_pmt_povline = crra_func((percapcons + povline_pmt * 20000), ganma = 5),
-                utility_ganma2_pmt_povline = crra_func((percapcons + povline_pmt * 20000), ganma = 3),
+  dplyr::mutate(utility_ganma3_pmt_povline = crra_func((percapcons_imp + povline_pmt * 22634), ganma = 2),
+                utility_ganma5_pmt_povline = crra_func((percapcons_imp + povline_pmt * 22634), ganma = 5),
+                utility_ganma2_pmt_povline = crra_func((percapcons_imp + povline_pmt * 22634), ganma = 3),
                 povline_pmt_food = ifelse(percapcons <= (137430/365) & stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 
                                           1, 0),
-                utility_ganma3_pmt_popbnfcry = crra_func((percapcons + popbnfcry_pmt * 20000), ganma = 3),
-                utility_ganma5_pmt_popbnfcry = crra_func((percapcons + popbnfcry_pmt * 20000), ganma = 5),
-                utility_ganma2_pmt_popbnfcry = crra_func((percapcons + popbnfcry_pmt * 20000), ganma = 2),
+                utility_ganma3_pmt_popbnfcry = crra_func((percapcons_imp + popbnfcry_pmt * 22634), ganma = 3),
+                utility_ganma5_pmt_popbnfcry = crra_func((percapcons_imp + popbnfcry_pmt * 22634), ganma = 5),
+                utility_ganma2_pmt_popbnfcry = crra_func((percapcons_imp + popbnfcry_pmt * 22634), ganma = 2),
   ) %>%
-  dplyr::mutate(popbnfcry_pmt_food = ifelse(percapcons <= quantile(a$percapcons, c(0.092), na.rm =TRUE)& stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 
+  dplyr::mutate(popbnfcry_pmt_food = ifelse(percapcons_imp <= quantile(a$percapcons_imp, c(0.092), na.rm =TRUE)& stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 
                                             1, 0)) %>%
   dplyr::mutate(
-    utility_ganma3_pmt_povline_food = crra_func((percapcons + povline_pmt_food * 43092), ganma = 3),
-    utility_ganma5_pmt_povline_food = crra_func((percapcons + povline_pmt_food * 43092), ganma = 5),
-    utility_ganma2_pmt_povline_food = crra_func((percapcons + povline_pmt_food * 43092), ganma = 2),
-    utility_ganma3_pmt_popbnfcry_food = crra_func((percapcons + popbnfcry_pmt_food * 43092), ganma = 3),
-    utility_ganma5_pmt_popbnfcry_food = crra_func((percapcons + popbnfcry_pmt_food * 43092), ganma = 5),
-    utility_ganma2_pmt_popbnfcry_food = crra_func((percapcons + popbnfcry_pmt_food * 43092), ganma = 2)
+    utility_ganma3_pmt_povline_food = crra_func((percapcons_imp + povline_pmt_food * 22634), ganma = 3),
+    utility_ganma5_pmt_povline_food = crra_func((percapcons_imp + povline_pmt_food * 22634), ganma = 5),
+    utility_ganma2_pmt_povline_food = crra_func((percapcons_imp + povline_pmt_food * 22634), ganma = 2),
+    utility_ganma3_pmt_popbnfcry_food = crra_func((percapcons_imp + popbnfcry_pmt_food * 22634), ganma = 3),
+    utility_ganma5_pmt_popbnfcry_food = crra_func((percapcons_imp + popbnfcry_pmt_food * 22634), ganma = 5),
+    utility_ganma2_pmt_popbnfcry_food = crra_func((percapcons_imp + popbnfcry_pmt_food * 22634), ganma = 2)
   )
 
 #cash  
@@ -361,28 +369,28 @@ sum(df_pmt$utility_ganma5_pmt_popbnfcry_food,na.rm = TRUE)
 
 
 
-g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y, color = as.factor(ex_error_povline))) +
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons_imp, y, color = as.factor(ex_error_povline))) +
   geom_point(alpha = 0.8) + 
   geom_vline(xintercept = log10(137430/365)) +
   geom_hline(yintercept = log10(137430/365))
 plot(g)
-g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y, color = as.factor(in_error_povline))) +
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons_imp, y, color = as.factor(in_error_povline))) +
   geom_point(alpha = 0.8) + 
   geom_vline(xintercept = log10(137430/365)) +
   geom_hline(yintercept = log10(137430/365))
 plot(g)
-g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y,  color = as.factor(ex_error_popbnfcry))) +
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons_imp, y,  color = as.factor(ex_error_popbnfcry))) +
   geom_point(alpha = 0.8) + 
-  geom_vline(xintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE)) +
-  geom_hline(yintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE))
+  geom_vline(xintercept = quantile(df_pmt$lpercapcons_imp, c(0.092), na.rm = TRUE)) +
+  geom_hline(yintercept = quantile(df_pmt$lpercapcons_imp, c(0.092), na.rm = TRUE))
 plot(g)
-g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons, y,  color = as.factor(in_error_popbnfcry))) +
+g = ggplot2::ggplot(data = df_pmt, aes(lpercapcons_imp, y,  color = as.factor(in_error_popbnfcry))) +
   geom_point(alpha = 0.8) + 
-  geom_vline(xintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE)) +
-  geom_hline(yintercept = quantile(df_pmt$lpercapcons, c(0.092), na.rm = TRUE))
+  geom_vline(xintercept = quantile(df_pmt$lpercapcons_imp, c(0.092), na.rm = TRUE)) +
+  geom_hline(yintercept = quantile(df_pmt$lpercapcons_imp, c(0.092), na.rm = TRUE))
 plot(g)
 
-
+cor.test(df_pmt$y, df_pmt$lpercapcons_imp)
 #実際のper capita consの受益者選定
 df_pmt$in_error_povline
 
@@ -398,23 +406,23 @@ ganma = c("3","5","7")
 a = df_use %>% dplyr::filter(., stringi::stri_detect_regex(.$hhid, "(.37.*)|(.27.*)|(.24.*)"))
 
 df_use %<>% 
-  dplyr::mutate(beneficiary_food_popbnfcry_cons = ifelse(percapcons <= quantile(a$percapcons, c(0.092), na.rm = TRUE) & stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 1, 0)) %>%
+  dplyr::mutate(beneficiary_food_popbnfcry_cons = ifelse(percapcons_imp <= quantile(a$percapcons_imp, c(0.092), na.rm = TRUE) & stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE, 1, 0)) %>%
   dplyr::mutate(beneficiary_food_povline_cons = ifelse(stringi::stri_detect_regex(hhid, "(.37.*)|(.27.*)|(.24.*)") == TRUE & povline_cons == 1, 1, 0)) %>%
-  dplyr::mutate(percapcons_food_povline_cons = percapcons + beneficiary_food_povline_cons * 43092,
+  dplyr::mutate(percapcons_food_povline_cons = percapcons_imp + beneficiary_food_povline_cons * 43092,
                 crra_food_povline_cons_ganma3 = crra_func(percapcons_food_povline_cons, ganma = 3),
                 crra_food_povline_cons_ganma5 = crra_func(percapcons_food_povline_cons, ganma = 5),
                 crra_food_povline_cons_ganma2 = crra_func(percapcons_food_povline_cons, ganma = 2),
-                percapcons_food_popbnfcry_cons = percapcons + beneficiary_food_popbnfcry_cons * 43092,
+                percapcons_food_popbnfcry_cons = percapcons_imp + beneficiary_food_popbnfcry_cons * 43092,
                 crra_food_popbnfcry_cons_ganma3 = crra_func(percapcons_food_popbnfcry_cons, ganma = 3),
                 crra_food_popbnfcry_cons_ganma5 = crra_func(percapcons_food_popbnfcry_cons, ganma = 5),
                 crra_food_popbnfcry_cons_ganma2 = crra_func(percapcons_food_popbnfcry_cons, ganma = 2)
   ) %>%
-  dplyr::mutate(crra_cash_povlinec_ons_ganma2 = crra_func(percapcons + povline_cons * 20000, ganma = 2),
-                crra_cash_povline_cons_ganma3 = crra_func(percapcons + povline_cons * 20000, ganma = 3),
-                crra_cash_povline_cons_ganma5 = crra_func(percapcons + povline_cons * 20000, ganma = 5),
-                crra_cash_popbnfcry_cons_ganma2 = crra_func(percapcons + popbnfcry_cons * 20000, ganma = 2),
-                crra_cash_popbnfcry_cons_ganma3 = crra_func(percapcons + popbnfcry_cons * 20000, ganma = 3),
-                crra_cash_popbnfcry_cons_ganma5 = crra_func(percapcons + popbnfcry_cons * 20000, ganma = 5)
+  dplyr::mutate(crra_cash_povlinec_ons_ganma2 = crra_func(percapcons_imp + povline_cons * 20000, ganma = 2),
+                crra_cash_povline_cons_ganma3 = crra_func(percapcons_imp + povline_cons * 20000, ganma = 3),
+                crra_cash_povline_cons_ganma5 = crra_func(percapcons_imp + povline_cons * 20000, ganma = 5),
+                crra_cash_popbnfcry_cons_ganma2 = crra_func(percapcons_imp + popbnfcry_cons * 20000, ganma = 2),
+                crra_cash_popbnfcry_cons_ganma3 = crra_func(percapcons_imp + popbnfcry_cons * 20000, ganma = 3),
+                crra_cash_popbnfcry_cons_ganma5 = crra_func(percapcons_imp + popbnfcry_cons * 20000, ganma = 5)
   ) 
 
 list_cons = list("crra_food_povline_cons_ganma3", "crra_food_povline_cons_ganma5", "crra_food_povline_cons_ganma2", 
@@ -427,3 +435,22 @@ for (i in list_cons) {
   print(sum(df_use[[i]], na.rm = TRUE))
   print("")
 }
+
+###
+## 分位点回帰（試行錯誤）
+summary = estimate_pmt(dataset_list$dataset_2015_all, comid = "no", outcome = "lpercapcons", covariates = var_list$var_step_3, method = "qr")
+#summary$glance
+var = unlist(stringi::stri_split_regex(summary$formula, pattern = "(.\\+.|.\\~.)"))
+var[1] = "1"
+pred = 0
+for (num in 1:length(var)) {
+  if(num == 1){
+    elem = summary$estimate$estimate[num] * 1
+  } else {
+    elem = summary$estimate$estimate[num] * dataset_list$dataset_2015_all[var[num]]
+  }
+  pred = pred + elem
+}
+
+
+

@@ -9,15 +9,18 @@
 # var_list
 outcome_list = list(
   outcome_2015 = list("trnsfr_any_dummy","in_error_popbnfcry", "ex_error_popbnfcry",
-                      "in_error_popbnfcry_imp", "ex_error_popbnfcry_imp","in_error_povline", "ex_error_povline"
+                      "in_error_povline", "ex_error_povline", 
+                      "iner_elite_gov_popbn", "exer_elite_gov_popbn", "iner_elite_gov_povln", "exer_elite_gov_povln"
   ),
   outcome_2018 = list("trnsfr_any_dummy", "trnsfr_food_dummy", "trnsfr_cash_dummy",
-                      "in_error_popbnfcry", "ex_error_popbnfcry","in_error_popbnfcry_imp", "ex_error_popbnfcry_imp",
-                      "in_error_povline", "ex_error_povline"
+                      "in_error_popbnfcry", "ex_error_popbnfcry",
+                      "in_error_povline", "ex_error_povline",
+                      "iner_elite_gov_popbn", "exer_elite_gov_popbn", "iner_elite_gov_povln", "exer_elite_gov_povln"
   ),
   outcome_2020 = list("trnsfr_any_dummy", "trnsfr_food_dummy", "trnsfr_cash_dummy",
-                      "in_error_popbnfcry", "ex_error_popbnfcry","in_error_popbnfcry_imp", "ex_error_popbnfcry_imp",
-                      "in_error_povline", "ex_error_povline"
+                      "in_error_popbnfcry", "ex_error_popbnfcry",
+                      "in_error_povline", "ex_error_povline",
+                      "iner_elite_gov_popbn", "exer_elite_gov_popbn", "iner_elite_gov_povln", "exer_elite_gov_povln"
   )
 )
 
@@ -53,7 +56,7 @@ make_df_community_level = function(data, year){
   outcome = outcome_list[[paste("outcome", year, sep = "_")]] 
   var_list = var_list[[paste("var_list", year, sep = "_")]] 
   
-  cols_convert_from = unlist(append(var_list$var_step_3, outcome)) %>% .[!stringi::stri_detect_regex(., "hist_aid")]
+  cols_convert_from = unlist(append(var_list$var_step_3, outcome)) 
   cols_id = c("comid")
   cols_df_use = unlist(append(cols_id, cols_convert_from))
   
@@ -84,6 +87,29 @@ for (y in year) {
   print("")
 }
 
+dataset_community_level_all_year = purrr::map2(dataset_community_level, names(dataset_community_level), ~ dplyr::mutate(.x, year = gsub("df_community_level_", "", .y))) %>% purrr::reduce(., dplyr::bind_rows)
+write.csv(dataset_community_level_all_year, file.path("datas", "processed", "dataset_community_level_all_year.csv"))
 
+
+cols = c("comid", "com_ex_error_povline", "com_capital")
+make_df_use_ssid = function(name, cols){
+  dataset_community_level[[name]] %>%
+    dplyr::select(cols) %>%
+    dplyr::filter(!is.na(.$com_ex_error_povline)) %>%
+    dplyr::rename_at(dplyr::vars(contains("com_")), 
+                     ~paste0(., "_", gsub(pattern="df_community_level_", replacement="", x = name))
+                     )
+}
+
+
+write.csv(
+  purrr::reduce(
+    purrr::map(names(dataset_community_level),
+               ~ make_df_use_ssid(name = as.character(.x), cols = cols)
+    ), 
+    dplyr::inner_join, by = "comid"),  
+  file.path("datas", "processed", "df_use_sdid.csv")
+)
 
 print("done: merge_community.R")
+
