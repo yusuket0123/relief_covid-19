@@ -7,9 +7,9 @@ library(magrittr)
 
 ### setup
 
-path_merge = file.path("code", "merge.R")
+path_merge = file.path("code", "cleaning", "merge.R")
 source(path_merge)
-path_desc_func = file.path("code", "desc_func.R")
+path_desc_func = file.path("code", "eda", "desc_func.R")
 source(path_desc_func)
 
 

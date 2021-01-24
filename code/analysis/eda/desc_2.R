@@ -5,8 +5,8 @@
 library(magrittr)
 
 ### setup
-path_merge_community = file.path("code", "merge_community.R")
-path_desc_func = file.path("code", "desc_func.R")
+path_merge_community = file.path("code", "cleaning","merge_community.R")
+path_desc_func = file.path("code", "eda", "desc_func.R")
 
 source(path_merge_community)
 source(path_desc_func)
