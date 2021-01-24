@@ -4,9 +4,9 @@
 
 library(magrittr)
 
-path_merge = file.path("code", "merge.R")
+path_merge = file.path("code","cleaning", "merge.R")
 source(path_merge)
-path_est_func = file.path("code", "est_func.R")
+path_est_func = file.path("code","est", "est_func.R")
 source(path_est_func)
 
 ### 推計関数

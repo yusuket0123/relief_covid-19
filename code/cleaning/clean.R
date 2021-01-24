@@ -5,7 +5,7 @@ library(magrittr)
 
 ### construct.Rからデータ読み込み
 
-path_construct = file.path("code", "construct.R")
+path_construct = file.path("code","cleaning", "construct.R")
 source(path_construct)
 
 

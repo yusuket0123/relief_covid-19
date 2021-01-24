@@ -7,7 +7,7 @@ library(magrittr)
 
 ### construct.Rからデータ読み込み
 
-path_merge = file.path("code", "merge.R")
+path_merge = file.path("code", "cleaning", "merge.R")
 source(path_merge)
 
 make_df_use_ssid = function(name, cols, outcome){
@@ -47,7 +47,7 @@ make_df_imp = function(data){
   
   #** conduct multiple imputation in mice
   imp <- mice::mice( data, method=method, predictorMatrix=predictorMatrix,  #post = post, #
-                     m=10, maxit=10, imputationFunction=imputationFunction, seed = 12345 )
+                     m=10, maxit=10, seed = 12345 )
   data2 = mice::complete(imp, 1)
   return(data2)
 }
@@ -87,21 +87,22 @@ df_imp = make_df_imp(df)
 write.csv(df_imp, file.path("datas", "processed", "sdid", "df_imp_use_sdid_iner_elite_gov_povln.csv"))
 
 
-
-outcomes = c("iner_elite_gov_popbn", "exer_elite_gov_popbn", "iner_elite_gov_povln", "exer_elite_gov_povln")
-outcomes = c(outcomes, paste("com", outcomes, sep = "_"))　
-
-for (o in outcomes) {
-  if(stringi::stri_detect_regex(o, "^com_.*") == TRUE){
-    data = dataset_community_level
-    id = "comid"
-    cols = c(id, o, "com_capital")
-  }else{
-    data = dataset_list
-    id = "hhid"
-    cols = c(id, o, "capital")
+debug = function(){
+  outcomes = c("iner_elite_gov_popbn", "exer_elite_gov_popbn", "iner_elite_gov_povln", "exer_elite_gov_povln")
+  outcomes = c(outcomes, paste("com", outcomes, sep = "_"))　
+  
+  for (o in outcomes) {
+    if(stringi::stri_detect_regex(o, "^com_.*") == TRUE){
+      data = dataset_community_level
+      id = "comid"
+      cols = c(id, o, "com_capital")
+    }else{
+      data = dataset_list
+      id = "hhid"
+      cols = c(id, o, "capital")
+    }
+    ####
+    output.df_use(data = data, id = id, outcome = o, cols = cols)
+    print(o)
   }
-  ####
-  output.df_use(data = data, id = id, outcome = o, cols = cols)
-  print(o)
 }

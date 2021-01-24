@@ -7,12 +7,12 @@ library(magrittr)
 
 ### construct.Rからデータ読み込み
 
-path_clean = file.path("code", "clean.R")
+path_clean = file.path("code", "cleaning", "clean.R")
 source(path_clean)
 
 SkipImputation = function(skip = "no"){
   if(skip == "no"){
-    path_imp = file.path("code", "imp.R")
+    path_imp = file.path("code", "cleaning", "imp.R")
     source(path_imp)
     } else if (skip == "yes") {
     print("skip imputation of food price data")
@@ -344,7 +344,7 @@ dataset_list$dataset_2018_all %<>% dplyr::mutate(hhhead_age = dplyr::na_if(hhhea
 
 Run.merge_community.R = function(run = "yes"){
   if(run == "yes"){
-    path_merge_community = file.path("code", "merge_community.R")
+    path_merge_community = file.path("code", "cleaning", "merge_community.R")
     source(path_merge_community)
     year = c("2015", "2018", "2020")
     

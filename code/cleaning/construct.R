@@ -6,7 +6,7 @@ library(magrittr)
 
 ### read.Rからデータ読み込み
 
-path_read = file.path("code", "read.R")
+path_read = file.path("code", "loading", "read.R")
 readdatas = source(path_read)
 
 mutate_comid = function(data){

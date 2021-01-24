@@ -10,7 +10,7 @@ library(magrittr)
 
 ### construct.Rからデータ読み込み
 
-path_merge = file.path("code", "merge.R")
+path_merge = file.path("code", "cleaning", "merge.R")
 source(path_merge)
 
 
