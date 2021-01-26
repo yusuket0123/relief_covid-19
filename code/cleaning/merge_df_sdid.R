@@ -47,7 +47,7 @@ make_df_imp = function(data){
   
   #** conduct multiple imputation in mice
   imp <- mice::mice( data, method=method, predictorMatrix=predictorMatrix,  #post = post, #
-                     m=10, maxit=10, seed = 12345 )
+                     m=50, maxit=50, seed = 12345 )
   data2 = mice::complete(imp, 1)
   return(data2)
 }
@@ -85,7 +85,7 @@ df %>% dplyr::group_by(capital_2015) %>% dplyr::summarise(mean(iner_elite_gov_po
 
 df_imp = make_df_imp(df)
 write.csv(df_imp, file.path("datas", "processed", "sdid", "df_imp_use_sdid_iner_elite_gov_povln.csv"))
-
+df_imp%>% dplyr::group_by(capital_2020) %>% dplyr::summarise(mean(iner_elite_gov_povln_2020, na.rm = TRUE), mean(iner_elite_gov_povln_2018, na.rm = TRUE))
 
 debug = function(){
   outcomes = c("iner_elite_gov_popbn", "exer_elite_gov_popbn", "iner_elite_gov_povln", "exer_elite_gov_povln")

@@ -538,6 +538,7 @@ dataset_2018$sect11a_harvestw4 %<>%
   dplyr::mutate(cons_nonfood1_h_use = sum(cons, na.rm = TRUE)/ 7) %>%
   dplyr::ungroup() %>%
   dplyr::distinct(hhid_use, .keep_all = TRUE)
+
 dataset_2018$sect8a_plantingw4 %<>%
   dplyr::mutate(., cons = dplyr::case_when(s8q1 == 2 ~ 0, s8q1 == 1 ~ s8q2, TRUE ~ NA_real_)) %>%
   dplyr::group_by(hhid_use) %>%
